@@ -1,0 +1,13 @@
+{{- if and .Values.postgresql.persistence.enabled (not .Values.postgresql.persistence.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-db-pvc
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+    - {{ .Values.postgresql.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.postgresql.persistence.size }}
+{{- end }}

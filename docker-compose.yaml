@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres:18
+    container_name: bankops-db
+    environment:
+      POSTGRES_DB: bankops
+      POSTGRES_USER: bankops_app
+      POSTGRES_PASSWORD: ${BANKOPS_DB_PASSWORD:?BANKOPS_DB_PASSWORD is required}
+    ports:
+      - "5433:5432"
+    volumes:
+      - bankops_pgdata:/var/lib/postgresql
+      - ./db-init/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - bankops-net
+
+  app:
+    build:
+      context: .
+    container_name: bankops-app
+    environment:
+      DATABASE_URL: postgresql://bankops_app:${BANKOPS_DB_PASSWORD:?BANKOPS_DB_PASSWORD is required}@db:5432/bankops
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    networks:
+      - bankops-net
+
+volumes:
+  bankops_pgdata:
+
+networks:
+  bankops-net:

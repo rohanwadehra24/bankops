@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bankops-db
+  namespace: bankops
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: bankops-db
+
+  template:
+    metadata:
+      labels:
+        app: bankops-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:18
+          env:
+            - name: POSTGRES_DB
+              value: bankops
+            - name: POSTGRES_USER
+              value: bankops_app
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: bankops-db-secret
+                  key: postgres-password
+          ports:
+            - containerPort: 5432
+
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql
+
+            - name: db-init-script
+              mountPath:  /docker-entrypoint-initdb.d/init.sql
+              subPath: init.sql
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
+
+      volumes:
+         - name: postgres-storage
+           persistentVolumeClaim:
+             claimName: bankops-db-pvc
+
+         - name: db-init-script
+           configMap:
+             name: bankops-db-init
