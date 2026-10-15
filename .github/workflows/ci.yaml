@@ -1,3 +1,4 @@
+
 name: BankOps CI
 
 on:
@@ -9,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
   test:
@@ -34,7 +36,7 @@ jobs:
         run: pytest -v test_app.py
 
   docker-build:
-    name: Docker Image Build
+    name: Docker Image Build and Push
     runs-on: ubuntu-latest
     needs: test
 
@@ -42,5 +44,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Login to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build BankOps Docker image
-        run: docker build -t bankops:${{ github.sha }} .
+        run: |
+          docker build \
+            -t ghcr.io/rohanwadehra24/bankops:${{ github.sha }} .
+
+      - name: Push BankOps image to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker push ghcr.io/rohanwadehra24/bankops:${{ github.sha }}
+
