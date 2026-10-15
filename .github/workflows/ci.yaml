@@ -32,3 +32,15 @@ jobs:
 
       - name: Run unit tests
         run: pytest -v test_app.py
+
+  docker-build:
+    name: Docker Image Build
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build BankOps Docker image
+        run: docker build -t bankops:${{ github.sha }} .
