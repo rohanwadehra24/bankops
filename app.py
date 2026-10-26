@@ -32,6 +32,10 @@ def evaluate_transaction(amount: float) -> str:
 def health():
     return {"status": "ok"}
 
+@app.get("/version")
+def version():
+    return {"application": "BankOps", "version": "1.1.0"}
+
 
 @app.post("/transactions")
 def create_transaction(transaction: Transaction):
