@@ -1,0 +1,29 @@
+name: BankOps Local Helm Deployment
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy BankOps to Kind
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, linux, x64, bankops-deploy]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy with Helm
+        env:
+          KUBECONFIG: /home/bankopsrunner/.kube/config
+        run: |
+          helm upgrade bankops-test ./bankops-chart \
+            --namespace bankops-helm-test \
+            --reuse-values \
+            --set image.repository=ghcr.io/rohanwadehra24/bankops \
+            --set-string image.tag="cf1c412abb3feee1463a520b973a9e2825d53a74" \
+            --wait \
+            --timeout 5m
