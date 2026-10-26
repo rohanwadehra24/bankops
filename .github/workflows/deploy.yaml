@@ -24,6 +24,6 @@ jobs:
             --namespace bankops-helm-test \
             --reuse-values \
             --set image.repository=ghcr.io/rohanwadehra24/bankops \
-            --set-string image.tag="cf1c412abb3feee1463a520b973a9e2825d53a74" \
+            --set-string image.tag="13963666e623800ade0bedad2dd391bd06bb7460" \
             --wait \
             --timeout 5m
