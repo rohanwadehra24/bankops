@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bankops-gitops
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/rohanwadehra24/bankops.git
+    targetRevision: main
+    path: bankops-chart
+    helm:
+      releaseName: bankops-gitops
+      valueFiles:
+        - ../gitops/values-gitops.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: bankops-gitops
