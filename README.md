@@ -128,3 +128,77 @@ This demonstrates application rollback with data continuity in the local lab.
 Note: Helm rollback does not automatically reverse database schema migrations or restore database contents from backups.
 
 
+
+## Argo CD and GitOps
+
+### Architecture
+
+BankOps uses Argo CD to deploy its Helm chart from GitHub
+to a local Kind Kubernetes cluster.
+
+GitHub -> Argo CD -> Helm rendering -> Kubernetes -> BankOps
+
+The GitOps environment is isolated from the existing
+Helm-managed deployment.
+
+- Argo CD namespace: `argocd`
+- Application namespace: `bankops-gitops`
+- Application name: `bankops-gitops`
+- Helm release name: `bankops-gitops`
+- Git branch: `main`
+
+### Declarative Configuration
+
+- `gitops/application.yaml` defines the Argo CD Application.
+- `gitops/values-gitops.yaml` defines environment-specific Helm values.
+- `bankops-chart/` contains the Kubernetes Helm templates.
+
+Database credentials are stored in a namespace-specific
+Kubernetes Secret and are not committed to Git.
+
+### Automatic Synchronization and Self-Healing
+
+The Argo CD Application uses:
+
+- Automatic synchronization: enabled
+- Self-healing: enabled
+- Automatic pruning: disabled
+
+A controlled drift experiment changed the FastAPI Deployment
+from one replica to two without modifying Git.
+
+Argo CD automatically restored the Git-defined replica count
+to one.
+
+Kubernetes Events confirmed the scale-up and scale-down actions.
+
+### Functional Validation
+
+The GitOps deployment successfully passed:
+
+- FastAPI `/health` validation
+- FastAPI `/version` validation (v1.1.0)
+- Synthetic transaction creation
+- Transaction monitoring outcome: `REVIEW`
+- PostgreSQL transaction retrieval
+- Transaction persistence after FastAPI Pod restart
+
+Test transaction: `GITOPS-TXN-001`
+
+PostgreSQL uses the dedicated PVC `bankops-gitops-db-pvc`
+with 1Gi of storage.
+
+### Operational Lessons
+
+Intermittent internal DNS resolution failures affected
+Argo CD repository-server communication during testing.
+
+The affected synchronization operations were investigated,
+and successful reconciliation was subsequently verified.
+
+The underlying DNS timeout cause remains unresolved and
+requires further investigation.
+
+This deployment demonstrates local GitOps workflows.
+Production use would require additional security,
+high availability, backup and disaster recovery controls.
