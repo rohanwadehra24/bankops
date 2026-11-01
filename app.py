@@ -1,6 +1,7 @@
 import os
 
 import psycopg
+from prometheus_fastapi_instrumentator import Instrumentator
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -13,6 +14,7 @@ def get_connection():
 
 
 app = FastAPI(title="BankOps")
+Instrumentator().instrument(app).expose(app)
 transactions = {}
 
 
@@ -34,7 +36,7 @@ def health():
 
 @app.get("/version")
 def version():
-    return {"application": "BankOps", "version": "1.1.0"}
+    return {"application": "BankOps", "version": "1.2.0"}
 
 
 @app.post("/transactions")
