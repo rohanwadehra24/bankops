@@ -1,9 +1,9 @@
 replicaCount: 1
 
 image:
-  repository: bankops
+  repository: ghcr.io/rohanwadehra24/bankops
   pullPolicy: IfNotPresent
-  tag: "1.0"
+  tag: "f3620bb9b52b89af5260f26f11b4b4ea8c479f74"
 
 service:
   type: ClusterIP
