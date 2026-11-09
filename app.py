@@ -115,11 +115,3 @@ def get_transaction(transaction_id: str):
             "monitoring_outcome": row[6],
         }
     }
-
-# Temporary endpoint for Prometheus alert testing
-@app.get("/test-500", include_in_schema=False)
-def test_server_error():
-    raise HTTPException(
-        status_code=500,
-        detail="Intentional HTTP 500 for monitoring test"
-    )
