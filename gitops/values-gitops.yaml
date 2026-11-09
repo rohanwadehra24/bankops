@@ -1,6 +1,6 @@
 image:
   repository: ghcr.io/rohanwadehra24/bankops
-  tag: "d7f64992accc93c481cc3a2ab25aff3689fe17e1"
+  tag: "85af548acc98ec5783e4d8e53e810232e08990a4"
 
 postgresql:
   persistence:
