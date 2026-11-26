@@ -89,3 +89,47 @@ Assessment:
 - Simultaneous termination suggests a shared infrastructure interruption.
 - Exact root cause remains unconfirmed.
 - No further disruptive action was required.
+
+## 7. Correlate metrics, logs and traces
+
+- In Prometheus, check `up{job="bankops"}`, request rate, 5xx ratio, latency and burn-rate alerts.
+- In Grafana Explore, query Loki with `{namespace="bankops-gitops"}`; narrow time range and filter relevant errors.
+- In Tempo, search for service bankops and open relevant Trace IDs to inspect span duration and attributes. Correlate using time, endpoint and trace ID where available; do not assume every log contains a trace ID.
+- Compare telemetry with deployment history and Kubernetes events. Missing telemetry is not proof of no incident.
+
+## 8. Argo CD comparison error / internal DNS timeout
+
+Start with read-only checks:
+
+```bash
+kubectl get applications -n argocd
+kubectl get application bankops-gitops -n argocd -o jsonpath='{.status.conditions}'
+kubectl get pods -n argocd -o wide
+kubectl get svc argocd-repo-server -n argocd
+kubectl get endpointslices -n argocd -l kubernetes.io/service-name=argocd-repo-server
+kubectl get pods -n kube-system -l k8s-app=kube-dns -o wide
+kubectl logs -n kube-system deployment/coredns --tail=100
+```
+
+Unknown sync and Healthy health can coexist: inability to generate target manifests does not establish an application outage. Check internal DNS and TCP connectivity from the affected workload, service endpoints, node networking and kube-proxy before escalating. Capture evidence before restarting.
+
+If justified, roll out a targeted restart of the affected Argo CD component; CoreDNS restart can temporarily affect cluster-wide resolution. In this local Kind lab, Docker Desktop restart is a last-resort recovery action with possible downtime for all workloads. Never factory-reset or delete the cluster as a routine recovery step. Verify nodes, workloads, application sync, transaction retrieval and telemetry afterward.
+
+On 25 November 2026, reconciliation recovered to Synced/Healthy after Docker Desktop recovery; the exact underlying cause was not confirmed. See [validation evidence](../FINAL_VALIDATION.md).
+
+## 9. Database backup and recovery
+
+Before any destructive database recovery, preserve the current state and obtain approval. In the lab, a logical backup can be created outside the repository:
+
+```bash
+mkdir -p ~/bankops-backups
+(umask 077; kubectl exec -n bankops-gitops deploy/bankops-db -- pg_dump -U bankops_app -d bankops -Fc > ~/bankops-backups/bankops-$(date +%F).dump)
+```
+
+Use a unique filename if running more than once per day; check command exit status and file size. Inspect the archive catalog with pg_restore --list. Do not expose passwords or commit dump files. A logical backup does not include all cluster-wide roles or configuration.
+
+Restore testing should target a separate disposable PostgreSQL instance, not the live database. Verify schema, row counts and known synthetic transaction records; measure restoration time. Define RPO/RTO and offsite retention before production use. Actual restore is outstanding.
+
+## 10. Communication and escalation
+
+Record impact, severity, incident owner, latest verified state, next action and update cadence. Escalate infrastructure, application or database faults to the corresponding owner. Preserve evidence and document unknowns. Close only after recovery checks and monitoring; assign corrective action owners and dates. This local lab has no formal on-call organization or customer SLA.
